@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View, TextInput, Button, Switch, Modal, ScrollView } from 'react-native';
 import React from 'react';
-import { StatusBar } from 'expo-status-bar';
 import {
-  initialize,
-  requestPermission,
-  readRecords,
-  readRecord,
-  insertRecords,
-  deleteRecordsByUuids
-} from 'react-native-health-connect';
+  View,
+  Text,
+  TextInput,
+  Button,
+  Switch,
+  Modal,
+  ScrollView,
+} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import axios from 'axios';
@@ -17,15 +17,63 @@ import { requestNotifications } from 'react-native-permissions';
 import * as Sentry from '@sentry/react-native';
 import messaging from '@react-native-firebase/messaging';
 import { Notifications } from 'react-native-notifications';
-import DateTimePicker, { useDefaultStyles } from 'react-native-ui-datepicker';
+import DateTimePicker, {
+  useDefaultStyles,
+} from 'react-native-ui-datepicker';
+import styles from './styles';
+import {
+  initialize,
+  requestPermission,
+  readRecords,
+  readRecord,
+  insertRecords,
+  deleteRecordsByUuids,
+} from 'react-native-health-connect';
 
-
-const setObj = async (key, value) => { try { const jsonValue = JSON.stringify(value); await AsyncStorage.setItem(key, jsonValue) } catch (e) { console.log(e) } }
-const setPlain = async (key, value) => { try { await AsyncStorage.setItem(key, value) } catch (e) { console.log(e) } }
-const get = async (key) => { try { const value = await AsyncStorage.getItem(key); if (value !== null) { try { return JSON.parse(value) } catch { return value } } } catch (e) { console.log(e) } }
-const delkey = async (key, value) => { try { await AsyncStorage.removeItem(key) } catch (e) { console.log(e) } }
-const getAll = async () => { try { const keys = await AsyncStorage.getAllKeys(); return keys } catch (error) { console.error(error) } }
-
+const setObj = async (key, value) => {
+  try {
+    const jsonValue = JSON.stringify(value);
+    await AsyncStorage.setItem(key, jsonValue);
+  } catch (e) {
+    console.log(e);
+  }
+};
+const setPlain = async (key, value) => {
+  try {
+    await AsyncStorage.setItem(key, value);
+  } catch (e) {
+    console.log(e);
+  }
+};
+const get = async (key) => {
+  try {
+    const value = await AsyncStorage.getItem(key);
+    if (value !== null) {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
+const delkey = async (key, value) => {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch (e) {
+    console.log(e);
+  }
+};
+const getAll = async () => {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    return keys;
+  } catch (error) {
+    console.error(error);
+  }
+};
 
 Notifications.setNotificationChannel({
   channelId: 'push-errors',
@@ -38,33 +86,32 @@ Notifications.setNotificationChannel({
   enableVibration: true,
   showBadge: true,
   vibrationPattern: [200, 1000, 500, 1000, 500],
-})
+});
 
 let isSentryEnabled = true;
 get('sentryEnabled')
-  .then(res => {
-    if (res != "false") {
+  .then((res) => {
+    if (res != 'false') {
       Sentry.init({
         dsn: 'https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6',
-        // enableSpotlight: __DEV__,
       });
       Toast.show({
         type: 'success',
-        text1: "Sentry enabled from settings",
+        text1: 'Sentry enabled from settings',
       });
     } else {
       isSentryEnabled = false;
       Toast.show({
         type: 'info',
-        text1: "Sentry is disabled",
+        text1: 'Sentry is disabled',
       });
     }
   })
-  .catch(err => {
+  .catch((err) => {
     console.log(err);
     Toast.show({
       type: 'error',
-      text1: "Failed to check Sentry settings",
+      text1: 'Failed to check Sentry settings',
     });
   });
 ReactNativeForegroundService.register();
@@ -80,14 +127,14 @@ const requestUserPermission = async () => {
   }
 };
 
-messaging().setBackgroundMessageHandler(async remoteMessage => {
-  if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
-  if (remoteMessage.data.op == "DEL") handleDel(remoteMessage.data);
+messaging().setBackgroundMessageHandler(async (remoteMessage) => {
+  if (remoteMessage.data.op == 'PUSH') handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == 'DEL') handleDel(remoteMessage.data);
 });
 
-messaging().onMessage(remoteMessage => {
-  if (remoteMessage.data.op == "PUSH") handlePush(remoteMessage.data);
-  if (remoteMessage.data.op == "DEL") handleDel(remoteMessage.data);
+messaging().onMessage((remoteMessage) => {
+  if (remoteMessage.data.op == 'PUSH') handlePush(remoteMessage.data);
+  if (remoteMessage.data.op == 'DEL') handleDel(remoteMessage.data);
 });
 
 let login;
@@ -98,48 +145,43 @@ let fullSyncMode = true; // Default to full 30-day sync
 
 Toast.show({
   type: 'info',
-  text1: "Loading API Base URL...",
-  autoHide: false
-})
-get('apiBase')
-.then(res => {
+  text1: 'Loading API Base URL...',
+  autoHide: false,
+});
+get('apiBase').then((res) => {
   if (res) {
     apiBase = res;
     Toast.hide();
     Toast.show({
-      type: "success",
-      text1: "API Base URL loaded",
-    })
-  }
-  else {
+      type: 'success',
+      text1: 'API Base URL loaded',
+    });
+  } else {
     Toast.hide();
     Toast.show({
-      type: "error",
-      text1: "API Base URL not found. Using default server.",
-    })
+      type: 'error',
+      text1: 'API Base URL not found. Using default server.',
+    });
   }
-})
+});
 
-get('login')
-.then(res => {
+get('login').then((res) => {
   if (res) {
     login = res;
   }
-})
+});
 
-get('lastSync')
-.then(res => {
+get('lastSync').then((res) => {
   if (res) {
     lastSync = res;
   }
-})
+});
 
-get('fullSyncMode')
-.then(res => {
+get('fullSyncMode').then((res) => {
   if (res !== null) {
     fullSyncMode = res === 'true';
   }
-})
+});
 
 const askForPermissions = async () => {
   const isInitialized = await initialize();
@@ -220,9 +262,9 @@ const askForPermissions = async () => {
   if (grantedPermissions.length < 68) {
     Toast.show({
       type: 'error',
-      text1: "Permissions not granted",
-      text2: "Please visit settings to grant all permissions."
-    })
+      text1: 'Permissions not granted',
+      text2: 'Please visit settings to grant all permissions.',
+    });
   }
 };
 
@@ -231,48 +273,51 @@ const refreshTokenFunc = async () => {
   if (!refreshToken) return;
   try {
     let response = await axios.post(`${apiBase}/api/v2/refresh`, {
-      refresh: refreshToken
+      refresh: refreshToken,
     });
     if ('token' in response.data) {
       console.log(response.data);
-      await setPlain('login', response.data.token)
+      await setPlain('login', response.data.token);
       login = response.data.token;
       await setPlain('refreshToken', response.data.refresh);
       Toast.show({
         type: 'success',
-        text1: "Token refreshed successfully",
-      })
-    }
-    else {
+        text1: 'Token refreshed successfully',
+      });
+    } else {
       Toast.show({
         type: 'error',
-        text1: "Token refresh failed",
-        text2: response.data.error
-      })
+        text1: 'Token refresh failed',
+        text2: response.data.error,
+      });
       login = null;
       delkey('login');
     }
-  }
-
-  catch (err) {
+  } catch (err) {
     Toast.show({
       type: 'error',
-      text1: "Token refresh failed",
-      text2: err.message
-    })
+      text1: 'Token refresh failed',
+      text2: err.message,
+    });
     login = null;
     delkey('login');
   }
-}
+};
 
-const sync = async (customStartTime, customEndTime, onProgressCallback) => {
+const sync = async (
+  customStartTime,
+  customEndTime,
+  onProgressCallback
+) => {
   await initialize();
-  console.log("Syncing data...");
+  console.log('Syncing data...');
   let numRecords = 0;
   let numRecordsSynced = 0;
   Toast.show({
     type: 'info',
-    text1: customStartTime ? "Syncing from custom time..." : "Syncing data...",
+    text1: customStartTime
+      ? 'Syncing from custom time...'
+      : 'Syncing data...',
   });
 
   const currentTime = new Date().toISOString();
@@ -281,9 +326,19 @@ const sync = async (customStartTime, customEndTime, onProgressCallback) => {
   if (customStartTime) {
     startTime = customStartTime;
   } else if (fullSyncMode) {
-    startTime = String(new Date(new Date().setDate(new Date().getDate() - 29)).toISOString());
+    startTime = String(
+      new Date(
+        new Date().setDate(new Date().getDate() - 29)
+      ).toISOString()
+    );
   } else {
-    startTime = lastSync || String(new Date(new Date().setDate(new Date().getDate() - 29)).toISOString());
+    startTime =
+      lastSync ||
+      String(
+        new Date(
+          new Date().setDate(new Date().getDate() - 29)
+        ).toISOString()
+      );
   }
 
   if (!customStartTime) {
@@ -291,19 +346,60 @@ const sync = async (customStartTime, customEndTime, onProgressCallback) => {
     lastSync = currentTime;
   }
 
-  const recordTypes = ["ActiveCaloriesBurned", "BasalBodyTemperature", "BloodGlucose", "BloodPressure", "BasalMetabolicRate", "BodyFat", "BodyTemperature", "BoneMass", "CyclingPedalingCadence", "CervicalMucus", "ExerciseSession", "Distance", "ElevationGained", "FloorsClimbed", "HeartRate", "Height", "Hydration", "LeanBodyMass", "MenstruationFlow", "MenstruationPeriod", "Nutrition", "OvulationTest", "OxygenSaturation", "Power", "RespiratoryRate", "RestingHeartRate", "SleepSession", "Speed", "Steps", "StepsCadence", "TotalCaloriesBurned", "Vo2Max", "Weight", "WheelchairPushes"];
+  const recordTypes = [
+    'ActiveCaloriesBurned',
+    'BasalBodyTemperature',
+    'BloodGlucose',
+    'BloodPressure',
+    'BasalMetabolicRate',
+    'BodyFat',
+    'BodyTemperature',
+    'BoneMass',
+    'CyclingPedalingCadence',
+    'CervicalMucus',
+    'ExerciseSession',
+    'Distance',
+    'ElevationGained',
+    'FloorsClimbed',
+    'HeartRate',
+    'Height',
+    'Hydration',
+    'LeanBodyMass',
+    'MenstruationFlow',
+    'MenstruationPeriod',
+    'Nutrition',
+    'OvulationTest',
+    'OxygenSaturation',
+    'Power',
+    'RespiratoryRate',
+    'RestingHeartRate',
+    'SleepSession',
+    'Speed',
+    'Steps',
+    'StepsCadence',
+    'TotalCaloriesBurned',
+    'Vo2Max',
+    'Weight',
+    'WheelchairPushes',
+  ];
   const allPromises = [];
 
   for (let i = 0; i < recordTypes.length; i++) {
     let records;
     try {
-      console.log(`Reading records for ${recordTypes[i]} from ${startTime} to ${new Date().toISOString()}`);
+      console.log(
+        `Reading records for ${
+          recordTypes[i]
+        } from ${startTime} to ${new Date().toISOString()}`
+      );
       records = await readRecords(recordTypes[i], {
         timeRangeFilter: {
-          operator: "between",
+          operator: 'between',
           startTime: startTime,
-          endTime: customEndTime ? customEndTime : String(new Date().toISOString())
-        }
+          endTime: customEndTime
+            ? customEndTime
+            : String(new Date().toISOString()),
+        },
       });
       records = records.records;
     } catch (err) {
@@ -313,15 +409,28 @@ const sync = async (customStartTime, customEndTime, onProgressCallback) => {
     console.log(recordTypes[i]);
     numRecords += records.length;
 
-    if (['SleepSession', 'Speed', 'HeartRate'].includes(recordTypes[i])) {
+    if (
+      ['SleepSession', 'Speed', 'HeartRate'].includes(recordTypes[i])
+    ) {
       const detailPromises = records.map((recordMeta, j) => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           setTimeout(async () => {
             try {
-              let record = await readRecord(recordTypes[i], recordMeta.metadata.id);
-              await axios.post(`${apiBase}/api/v2/sync/${recordTypes[i]}`, { data: record }, { headers: { "Authorization": `Bearer ${login}` } });
+              let record = await readRecord(
+                recordTypes[i],
+                recordMeta.metadata.id
+              );
+              await axios.post(
+                `${apiBase}/api/v2/sync/${recordTypes[i]}`,
+                { data: record },
+                { headers: { Authorization: `Bearer ${login}` } }
+              );
               if (onProgressCallback) {
-                onProgressCallback({ count: 1, type: recordTypes[i], time: new Date() });
+                onProgressCallback({
+                  count: 1,
+                  type: recordTypes[i],
+                  time: new Date(),
+                });
               }
               numRecordsSynced += 1;
               ReactNativeForegroundService.update({
@@ -331,7 +440,7 @@ const sync = async (customStartTime, customEndTime, onProgressCallback) => {
                 icon: 'ic_launcher',
                 setOnlyAlertOnce: true,
                 color: '#000000',
-                progress: { max: numRecords, curr: numRecordsSynced }
+                progress: { max: numRecords, curr: numRecordsSynced },
               });
             } catch (err) {
               console.log(err);
@@ -345,9 +454,17 @@ const sync = async (customStartTime, customEndTime, onProgressCallback) => {
       if (records.length === 0) continue;
       const promise = (async () => {
         try {
-          await axios.post(`${apiBase}/api/v2/sync/${recordTypes[i]}`, { data: records }, { headers: { "Authorization": `Bearer ${login}` } });
+          await axios.post(
+            `${apiBase}/api/v2/sync/${recordTypes[i]}`,
+            { data: records },
+            { headers: { Authorization: `Bearer ${login}` } }
+          );
           if (onProgressCallback) {
-            onProgressCallback({ count: records.length, type: recordTypes[i], time: new Date() });
+            onProgressCallback({
+              count: records.length,
+              type: recordTypes[i],
+              time: new Date(),
+            });
           }
           numRecordsSynced += records.length;
           ReactNativeForegroundService.update({
@@ -357,7 +474,7 @@ const sync = async (customStartTime, customEndTime, onProgressCallback) => {
             icon: 'ic_launcher',
             setOnlyAlertOnce: true,
             color: '#000000',
-            progress: { max: numRecords, curr: numRecordsSynced }
+            progress: { max: numRecords, curr: numRecordsSynced },
           });
         } catch (err) {
           console.log(err);
@@ -377,151 +494,156 @@ const sync = async (customStartTime, customEndTime, onProgressCallback) => {
     setOnlyAlertOnce: true,
     color: '#000000',
   });
-  console.log("Sync fully completed.");
-}
-
+  console.log('Sync fully completed.');
+};
 
 const handlePush = async (message) => {
   const isInitialized = await initialize();
-  
+
   let data = JSON.parse(message.data);
   console.log(data);
 
   insertRecords(data)
-  .then((ids) => {
-    console.log("Records inserted successfully: ", { ids });
-  })
-  .catch((error) => {
-    Notifications.postLocalNotification({
-      body: "Error: " + error.message,
-      title: `Push failed for ${data[0].recordType}`,
-      silent: false,
-      category: "Push Errors",
-      fireDate: new Date(),
-      android_channel_id: 'push-errors',
+    .then((ids) => {
+      console.log('Records inserted successfully: ', { ids });
+    })
+    .catch((error) => {
+      Notifications.postLocalNotification({
+        body: 'Error: ' + error.message,
+        title: `Push failed for ${data[0].recordType}`,
+        silent: false,
+        category: 'Push Errors',
+        fireDate: new Date(),
+        android_channel_id: 'push-errors',
+      });
     });
-  })
-}
+};
 
 const handleDel = async (message) => {
   const isInitialized = await initialize();
-  
+
   let data = JSON.parse(message.data);
   console.log(data);
 
-  deleteRecordsByUuids(data.recordType, data.uuids, data.uuids)
+  deleteRecordsByUuids(data.recordType, data.uuids, data.uuids);
   axios.delete(`${apiBase}/api/v2/sync/${data.recordType}`, {
     data: {
       uuid: data.uuids,
     },
     headers: {
-      "Authorization": `Bearer ${login}`
-    }
-  })
-}
-  
+      Authorization: `Bearer ${login}`,
+    },
+  });
+};
 
-export default Sentry.wrap(function App() {
-  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+const MainComponent = () => {
+  const [, forceUpdate] = React.useReducer((x) => x + 1, 0);
   const [form, setForm] = React.useState(null);
   const [showSyncWarning, setShowSyncWarning] = React.useState(false);
-  const [customStartDate, setcustomStartDate] = React.useState(new Date());
-  const [customEndDate, setcustomEndDate] = React.useState(new Date());
+  const [customStartDate, setcustomStartDate] = React.useState(
+    new Date()
+  );
+  const [customEndDate, setcustomEndDate] = React.useState(
+    new Date()
+  );
   const [useCustomDates, setUseCustomDates] = React.useState(false);
-  const [showDatePickerModal, setShowDatePickerModal] = React.useState(false);
+  const [showDatePickerModal, setShowDatePickerModal] =
+    React.useState(false);
   const defaultCalStyles = useDefaultStyles();
-  
+
   // State for the new console
   const [consoleLog, setConsoleLog] = React.useState([]);
   const [lastUpdateTime, setLastUpdateTime] = React.useState('');
-  const [totalPointsUploaded, setTotalPointsUploaded] = React.useState(0);
-
+  const [totalPointsUploaded, setTotalPointsUploaded] =
+    React.useState(0);
 
   const loginFunc = async () => {
     Toast.show({
       type: 'info',
-      text1: "Logging in...",
-      autoHide: false
-    })
-
-    try {
-    let fcmToken = await requestUserPermission();
-    form.fcmToken = fcmToken;
-    let response = await axios.post(`${apiBase}/api/v2/login`, form);
-    if ('token' in response.data) {
-      console.log(response.data);
-      await setPlain('login', response.data.token);
-      login = response.data.token;
-      await setPlain('refreshToken', response.data.refresh);
-      forceUpdate();
-      Toast.hide();
-      Toast.show({
-        type: 'success',
-        text1: "Logged in successfully",
-      })
-      askForPermissions();
-    }
-    else {
-      Toast.hide();
-      Toast.show({
-        type: 'error',
-        text1: "Login failed",
-        text2: response.data.error
-      })
-    }
-    }
-
-    catch (err) {
-      Toast.hide();
-      Toast.show({
-        type: 'error',
-        text1: "Login failed",
-        text2: err.message
-      })
-    }
-  }
-
-  React.useEffect(() => {
-    requestNotifications(['alert']).then(({status, settings}) => {
-      console.log(status, settings)
+      text1: 'Logging in...',
+      autoHide: false,
     });
 
-    get('login')
-    .then(res => {
+    try {
+      let fcmToken = await requestUserPermission();
+      form.fcmToken = fcmToken;
+      let response = await axios.post(
+        `${apiBase}/api/v2/login`,
+        form
+      );
+      if ('token' in response.data) {
+        console.log(response.data);
+        await setPlain('login', response.data.token);
+        login = response.data.token;
+        await setPlain('refreshToken', response.data.refresh);
+        forceUpdate();
+        Toast.hide();
+        Toast.show({
+          type: 'success',
+          text1: 'Logged in successfully',
+        });
+        askForPermissions();
+      } else {
+        Toast.hide();
+        Toast.show({
+          type: 'error',
+          text1: 'Login failed',
+          text2: response.data.error,
+        });
+      }
+    } catch (err) {
+      Toast.hide();
+      Toast.show({
+        type: 'error',
+        text1: 'Login failed',
+        text2: err.message,
+      });
+    }
+  };
+
+  React.useEffect(() => {
+    requestNotifications(['alert']).then(({ status, settings }) => {
+      console.log(status, settings);
+    });
+
+    get('login').then((res) => {
       if (res) {
         login = res;
-        get('taskDelay')
-        .then(res => {
+        get('taskDelay').then((res) => {
           if (res) taskDelay = Number(res);
-        })
-        
+        });
+
         ReactNativeForegroundService.add_task(() => sync(), {
           delay: taskDelay,
           onLoop: true,
           taskId: 'hcgateway_sync',
-          onError: e => console.log(`Error logging:`, e),
+          onError: (e) => console.log(`Error logging:`, e),
         });
 
-        ReactNativeForegroundService.add_task(() => refreshTokenFunc(), {
-          delay: 10800 * 1000,
-          onLoop: true,
-          taskId: 'refresh_token',
-          onError: e => console.log(`Error logging:`, e),
-        });
+        ReactNativeForegroundService.add_task(
+          () => refreshTokenFunc(),
+          {
+            delay: 10800 * 1000,
+            onLoop: true,
+            taskId: 'refresh_token',
+            onError: (e) => console.log(`Error logging:`, e),
+          }
+        );
 
         ReactNativeForegroundService.start({
           id: 1244,
           title: 'HCGateway Sync Service',
-          message: 'HCGateway is working in the background to sync your data.',
+          message:
+            'HCGateway is working in the background to sync your data.',
           icon: 'ic_launcher',
           setOnlyAlertOnce: true,
           color: '#000000',
         }).then(() => console.log('Foreground service started'));
 
-        forceUpdate()
+        forceUpdate();
       }
-    })
-  }, [login])
+    });
+  }, [login]);
 
   const formatDateToISOString = (date) => {
     if (!date) return null;
@@ -541,92 +663,133 @@ export default Sentry.wrap(function App() {
     setLastUpdateTime('');
 
     const onProgress = (progress) => {
-        const message = `[${progress.time.toLocaleTimeString()}] Uploaded ${progress.count} for ${progress.type}.`;
-        setConsoleLog(prev => [message, ...prev.slice(0, 99)]);
-        setTotalPointsUploaded(prevTotal => prevTotal + progress.count);
-        setLastUpdateTime(progress.time.toLocaleString());
+      const message = `[${progress.time.toLocaleTimeString()}] Uploaded ${
+        progress.count
+      } for ${progress.type}.`;
+      setConsoleLog((prev) => [message, ...prev.slice(0, 99)]);
+      setTotalPointsUploaded(
+        (prevTotal) => prevTotal + progress.count
+      );
+      setLastUpdateTime(progress.time.toLocaleString());
     };
 
-    const startTime = useCustomDates && customStartDate ? formatDateToISOString(customStartDate) : null;
-    const endTime = useCustomDates && customEndDate ? formatDateToISOString(customEndDate) : null;
-    
+    const startTime =
+      useCustomDates && customStartDate
+        ? formatDateToISOString(customStartDate)
+        : null;
+    const endTime =
+      useCustomDates && customEndDate
+        ? formatDateToISOString(customEndDate)
+        : null;
+
     await sync(startTime, endTime, onProgress);
 
-    setConsoleLog(prev => [`Sync finished.`, ...prev]);
+    setConsoleLog((prev) => [`Sync finished.`, ...prev]);
   };
 
   return (
     <View style={styles.container}>
-      {login &&
-        <ScrollView style={{width: '100%'}} contentContainerStyle={{alignItems: 'center'}}>
-          <Text style={{ fontSize: 20, marginVertical: 10 }}>You are currently logged in.</Text>
-          <Text style={{ fontSize: 17, marginVertical: 10 }}>Last Sync: {lastSync}</Text>
+      {login && (
+        <ScrollView
+          style={{ width: '100%' }}
+          contentContainerStyle={{ alignItems: 'center' }}
+        >
+          <Text style={{ fontSize: 20, marginVertical: 10 }}>
+            You are currently logged in.
+          </Text>
+          <Text style={{ fontSize: 17, marginVertical: 10 }}>
+            Last Sync: {lastSync}
+          </Text>
 
-          <Text style={{ marginTop: 10, fontSize: 15 }}>API Base URL:</Text>
+          <Text style={{ marginTop: 10, fontSize: 15 }}>
+            API Base URL:
+          </Text>
           <TextInput
             style={styles.input}
             placeholder="API Base URL"
             defaultValue={apiBase}
-            onChangeText={text => {
+            onChangeText={(text) => {
               apiBase = text;
               setPlain('apiBase', text);
             }}
           />
 
-          <Text style={{ marginTop: 10, fontSize: 15 }}>Sync Interval (in hours):</Text>
+          <Text style={{ marginTop: 10, fontSize: 15 }}>
+            Sync Interval (in hours):
+          </Text>
           <TextInput
             style={styles.input}
             placeholder="Sync Interval"
-            keyboardType='numeric'
+            keyboardType="numeric"
             defaultValue={(taskDelay / (1000 * 60 * 60)).toString()}
-            onChangeText={text => {
+            onChangeText={(text) => {
               const hours = Number(text);
               if (isNaN(hours) || hours <= 0) {
-                Toast.show({ type: 'error', text1: 'Invalid interval'});
+                Toast.show({
+                  type: 'error',
+                  text1: 'Invalid interval',
+                });
                 return;
               }
-              taskDelay = hours * 60 * 60 * 1000; 
+              taskDelay = hours * 60 * 60 * 1000;
               setPlain('taskDelay', String(taskDelay));
-              ReactNativeForegroundService.update_task('hcgateway_sync', {
-                delay: taskDelay,
-              })
+              ReactNativeForegroundService.update_task(
+                'hcgateway_sync',
+                {
+                  delay: taskDelay,
+                }
+              );
               Toast.show({
                 type: 'success',
-                text1: `Sync interval updated to ${hours} ${hours === 1 ? 'hour' : 'hours'}`,
-              })
+                text1: `Sync interval updated to ${hours} ${
+                  hours === 1 ? 'hour' : 'hours'
+                }`,
+              });
             }}
           />
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}
+          >
             <Text style={{ fontSize: 15 }}>Enable Sentry:</Text>
             <Switch
               value={isSentryEnabled}
               onValueChange={async (value) => {
-              if (value) {
-                Sentry.init({
-                dsn: 'https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6',
-                });
-                Toast.show({
-                type: 'success',
-                text1: "Sentry enabled",
-                });
-                isSentryEnabled = true;
-                forceUpdate();
-              } else {
-                Sentry.close();
-                Toast.show({
-                type: 'success',
-                text1: "Sentry disabled",
-                });
-                isSentryEnabled = false;
-                forceUpdate();
-              }
-              await setPlain('sentryEnabled', value.toString());
+                if (value) {
+                  Sentry.init({
+                    dsn: 'https://e4a201b96ea602d28e90b5e4bbe67aa6@sentry.shuchir.dev/6',
+                  });
+                  Toast.show({
+                    type: 'success',
+                    text1: 'Sentry enabled',
+                  });
+                  isSentryEnabled = true;
+                  forceUpdate();
+                } else {
+                  Sentry.close();
+                  Toast.show({
+                    type: 'success',
+                    text1: 'Sentry disabled',
+                  });
+                  isSentryEnabled = false;
+                  forceUpdate();
+                }
+                await setPlain('sentryEnabled', value.toString());
               }}
             />
-            </View>
+          </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}
+          >
             <Text style={{ fontSize: 15 }}>Full 30-day sync:</Text>
             <Switch
               value={fullSyncMode}
@@ -638,20 +801,21 @@ export default Sentry.wrap(function App() {
                   await setPlain('fullSyncMode', value.toString());
                   Toast.show({
                     type: 'info',
-                    text1: "Sync mode updated",
-                    text2: "Will sync full 30 days of data"
+                    text1: 'Sync mode updated',
+                    text2: 'Will sync full 30 days of data',
                   });
                   forceUpdate();
                 }
               }}
             />
           </View>
-          
+
           {showSyncWarning && (
             <View style={styles.warningContainer}>
               <Text style={styles.warningText}>
-                Warning: Incremental sync only syncs data since the last sync. 
-                You may miss data if the app stops abruptly.
+                Warning: Incremental sync only syncs data since the
+                last sync. You may miss data if the app stops
+                abruptly.
               </Text>
               <View style={styles.warningButtons}>
                 <Button
@@ -668,8 +832,8 @@ export default Sentry.wrap(function App() {
                     setShowSyncWarning(false);
                     Toast.show({
                       type: 'info',
-                      text1: "Sync mode updated",
-                      text2: "Will only sync data since last sync"
+                      text1: 'Sync mode updated',
+                      text2: 'Will only sync data since last sync',
                     });
                     forceUpdate();
                   }}
@@ -678,15 +842,30 @@ export default Sentry.wrap(function App() {
             </View>
           )}
 
-          <View style={{ marginTop: 10, marginBottom: 5, width: 350 }}>
-            <Text style={{ fontSize: 15, marginBottom: 5 }}>Sync Range:</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View
+            style={{ marginTop: 10, marginBottom: 5, width: 350 }}
+          >
+            <Text style={{ fontSize: 15, marginBottom: 5 }}>
+              Sync Range:
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <Text>
-                {customStartDate ? formatDateToReadable(customStartDate) : 'Not set'} - 
-                {customEndDate ? formatDateToReadable(customEndDate) : 'Not set'}
+                {customStartDate
+                  ? formatDateToReadable(customStartDate)
+                  : 'Not set'}{' '}
+                -
+                {customEndDate
+                  ? formatDateToReadable(customEndDate)
+                  : 'Not set'}
               </Text>
-              <Button 
-                title="Select Dates" 
+              <Button
+                title="Select Dates"
                 onPress={() => setShowDatePickerModal(true)}
               />
             </View>
@@ -700,8 +879,10 @@ export default Sentry.wrap(function App() {
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Select Date Range</Text>
-                
+                <Text style={styles.modalTitle}>
+                  Select Date Range
+                </Text>
+
                 <DateTimePicker
                   mode="range"
                   maxDate={new Date()}
@@ -709,12 +890,14 @@ export default Sentry.wrap(function App() {
                   endDate={customEndDate}
                   onChange={(...dates) => {
                     setUseCustomDates(true);
-                    if (dates[0].startDate) setcustomStartDate(dates[0].startDate);
-                    if (dates[0].endDate) setcustomEndDate(dates[0].endDate);
+                    if (dates[0].startDate)
+                      setcustomStartDate(dates[0].startDate);
+                    if (dates[0].endDate)
+                      setcustomEndDate(dates[0].endDate);
                   }}
                   styles={defaultCalStyles}
                 />
-                
+
                 <View style={styles.modalButtons}>
                   <Button
                     title="Cancel"
@@ -733,9 +916,15 @@ export default Sentry.wrap(function App() {
             </View>
           </Modal>
 
-          <View style={{ marginTop: 10, marginBottom: 10, width: 350 }}>
+          <View
+            style={{ marginTop: 10, marginBottom: 10, width: 350 }}
+          >
             <Button
-              title={useCustomDates ? "Sync Selected Range" : "Sync Now (Default)"}
+              title={
+                useCustomDates
+                  ? 'Sync Selected Range'
+                  : 'Sync Now (Default)'
+              }
               onPress={handleManualSync}
             />
           </View>
@@ -743,24 +932,32 @@ export default Sentry.wrap(function App() {
           {/* --- NEW CONSOLE COMPONENT --- */}
           <View style={styles.consoleContainer}>
             <Text style={styles.consoleTitle}>Sync Console</Text>
-            <ScrollView style={styles.console} nestedScrollEnabled={true}>
+            <ScrollView
+              style={styles.console}
+              nestedScrollEnabled={true}
+            >
               {consoleLog.length === 0 ? (
-                <Text style={styles.consolePlaceholder}>Press "Sync Now" to see live updates.</Text>
+                <Text style={styles.consolePlaceholder}>
+                  Press "Sync Now" to see live updates.
+                </Text>
               ) : (
                 consoleLog.map((msg, index) => (
-                  <Text key={index} style={styles.consoleText}>{msg}</Text>
+                  <Text key={index} style={styles.consoleText}>
+                    {msg}
+                  </Text>
                 ))
               )}
             </ScrollView>
             <View style={styles.consoleFooter}>
-                <Text>Last update: {lastUpdateTime}</Text>
-                <Text>Points uploaded: {totalPointsUploaded}</Text>
+              <Text>Last update: {lastUpdateTime}</Text>
+              <Text>Points uploaded: {totalPointsUploaded}</Text>
             </View>
           </View>
           {/* --- END CONSOLE COMPONENT --- */}
 
-
-          <View style={{ marginTop: 20, width: 350, marginBottom: 50 }}>
+          <View
+            style={{ marginTop: 20, width: 350, marginBottom: 50 }}
+          >
             <Button
               title="Logout"
               onPress={() => {
@@ -768,48 +965,65 @@ export default Sentry.wrap(function App() {
                 login = null;
                 Toast.show({
                   type: 'success',
-                  text1: "Logged out successfully",
-                })
+                  text1: 'Logged out successfully',
+                });
                 forceUpdate();
               }}
               color={'darkred'}
             />
           </View>
         </ScrollView>
-      }
-      {!login &&
+      )}
+      {!login && (
         <View>
-          <Text style={{ 
-            fontSize: 30,
-            fontWeight: 'bold',
-            textAlign: 'center',
-           }}>Login</Text>
+          <Text
+            style={{
+              fontSize: 30,
+              fontWeight: 'bold',
+              textAlign: 'center',
+            }}
+          >
+            Login
+          </Text>
 
-           <Text style={{ marginVertical: 10 }}>If you don't have an account, one will be made for you when logging in.</Text>
+          <Text style={{ marginVertical: 10 }}>
+            If you don't have an account, one will be made for you
+            when logging in.
+          </Text>
 
           <TextInput
             style={styles.input}
             placeholder="Username"
-            onChangeText={text => setForm({ ...form, username: text })}
+            onChangeText={(text) =>
+              setForm({ ...form, username: text })
+            }
           />
           <TextInput
             style={styles.input}
             placeholder="Password"
             secureTextEntry={true}
-            onChangeText={text => setForm({ ...form, password: text })}
+            onChangeText={(text) =>
+              setForm({ ...form, password: text })
+            }
           />
           <Text style={{ marginVertical: 10 }}>API Base URL:</Text>
           <TextInput
             style={styles.input}
             placeholder="API Base URL"
             defaultValue={apiBase}
-            onChangeText={text => {
+            onChangeText={(text) => {
               apiBase = text;
               setPlain('apiBase', text);
             }}
           />
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 10 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}
+          >
             <Text style={{ fontSize: 15 }}>Enable Sentry:</Text>
             <Switch
               value={isSentryEnabled}
@@ -821,7 +1035,7 @@ export default Sentry.wrap(function App() {
                   });
                   Toast.show({
                     type: 'success',
-                    text1: "Sentry enabled",
+                    text1: 'Sentry enabled',
                   });
                   isSentryEnabled = true;
                   forceUpdate();
@@ -829,132 +1043,29 @@ export default Sentry.wrap(function App() {
                   Sentry.close();
                   Toast.show({
                     type: 'success',
-                    text1: "Sentry disabled",
+                    text1: 'Sentry disabled',
                   });
                   isSentryEnabled = false;
                   forceUpdate();
                 }
                 await setPlain('sentryEnabled', value.toString());
-              }} 
+              }}
             />
           </View>
 
           <Button
             title="Login"
             onPress={() => {
-              loginFunc()
+              loginFunc();
             }}
           />
         </View>
-      }
+      )}
 
-    <StatusBar style="dark" />
-    <Toast />
+      <StatusBar style="dark" />
+      <Toast />
     </View>
   );
-});;
+};
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    width: '100%',
-    paddingTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-
-  input: {
-    height: 50,
-    marginVertical: 7,
-    borderWidth: 1,
-    borderRadius: 4,
-    padding: 10,
-    width: 350,
-    fontSize: 17
-  },
-  
-  warningContainer: {
-    backgroundColor: '#fff3cd',
-    borderColor: '#ffeeba',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    marginVertical: 10,
-    width: 350,
-  },
-  
-  warningText: {
-    color: '#856404',
-    marginBottom: 10,
-  },
-  
-  warningButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    width: '90%',
-    maxHeight: '80%',
-  },
-  
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 15,
-  },
-  consoleContainer: {
-    width: 350,
-    height: 200,
-    marginTop: 20,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 5,
-    padding: 10,
-    backgroundColor: '#f5f5f5',
-  },
-  consoleTitle: {
-    fontWeight: 'bold',
-    marginBottom: 5,
-    borderBottomColor: '#ccc',
-    borderBottomWidth: 1,
-    paddingBottom: 5,
-  },
-  console: {
-    flex: 1,
-  },
-  consoleText: {
-    fontFamily: 'monospace',
-    fontSize: 12,
-  },
-  consolePlaceholder: {
-    color: '#999',
-    fontStyle: 'italic',
-  },
-  consoleFooter: {
-    borderTopColor: '#ccc',
-    borderTopWidth: 1,
-    paddingTop: 5,
-    marginTop: 5,
-  }
-});
+export default MainComponent;
